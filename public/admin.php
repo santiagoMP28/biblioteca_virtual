@@ -5,7 +5,7 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "admin") {
     exit();
 }
 
-include("../../includes/conexion.php");
+include(__DIR__ . '/../includes/conexion.php');
 
 // Eliminar libro
 if (isset($_POST['eliminar'])) {
