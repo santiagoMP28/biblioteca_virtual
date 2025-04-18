@@ -1,51 +1,43 @@
 <?php
 session_start();
-$mensaje = ""; // Inicializa para evitar el warning
+
+// Verificación crítica del driver (añade esto al inicio)
+if (!extension_loaded('pdo_pgsql')) {
+    die("Error: El controlador PostgreSQL no está instalado. Contacta al administrador del servidor.");
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
 
-    // Conexión a PostgreSQL en Render (usa variables de entorno en producción)
+    // Conexión directa (versión simplificada)
     try {
         $conn = new PDO(
-            "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a.oregon-postgres.render.com;" .
-            "dbname=bibliotecavi;" .
-            "sslmode=require",
-            'bibliotecavi_user',
-            'D5uyZglk0uUCVy4aT41y5kRHnHlfkRsY'
+            "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a;" .
+            "dbname=bibliotecavi",
+            "bibliotecavi_user",
+            "D5uyZglk0uUCVy4aT41y5kRHnHlfkRsY"
         );
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ATTR_ERRMODE_EXCEPTION);
-
-        // Consulta segura con prepared statement
-        $stmt = $conn->prepare("SELECT id, correo, contraseña, rol FROM usuarios WHERE correo = :correo");
-        $stmt->bindParam(':correo', $correo);
-        $stmt->execute();
         
-        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($usuario) {
-            // Verificar contraseña (asumiendo que está hasheada)
-            if (password_verify($contraseña, $usuario['contraseña'])) {
-                $_SESSION["id_usuario"] = $usuario["id"];
-                $_SESSION["rol"] = $usuario["rol"];
-                $_SESSION["correo"] = $usuario["correo"];
-
-                // Redirección según el rol
-                header("Location: " . ($usuario["rol"] == "admin" ? "admin.php" : "usuario.php"));
-                exit;
-            } else {
-                $mensaje = "<p class='mensaje-error'>Correo o contraseña incorrectos.</p>";
-            }
+        // Consulta de login
+        $stmt = $conn->prepare("SELECT * FROM usuarios WHERE correo = ?");
+        $stmt->execute([$correo]);
+        $usuario = $stmt->fetch();
+        
+        if ($usuario && ($contraseña === $usuario['contraseña'] || password_verify($contraseña, $usuario['contraseña']))) {
+            $_SESSION['usuario'] = $usuario;
+            header("Location: " . ($usuario['rol'] == 'admin' ? 'admin.php' : 'usuario.php'));
+            exit;
         } else {
-            $mensaje = "<p class='mensaje-error'>Correo o contraseña incorrectos.</p>";
+            $error = "Credenciales incorrectas";
         }
-    } catch(PDOException $e) {
-        $mensaje = "<p class='mensaje-error'>Error de conexión: " . htmlspecialchars($e->getMessage()) . "</p>";
+    } catch (PDOException $e) {
+        $error = "Error de conexión: " . $e->getMessage();
     }
 }
 ?>
 
+<!-- Mantén tu HTML actual -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
