@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Bienvenido - Biblioteca Virtual</title>
-    <link rel="stylesheet" href="vistas/css/estilos.css">
+    <link rel="stylesheet" href="css/estilos.css">
     <style>
         body {
             display: flex;
