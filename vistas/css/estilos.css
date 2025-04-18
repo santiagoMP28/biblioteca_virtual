@@ -1,0 +1,216 @@
+/* Estilo base */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Estilo específico solo para index.html */
+body.index-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+/* Contenedor de formulario (ej: login, no en admin) */
+.form-container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto; /* centrado para login */
+    box-sizing: border-box;
+}
+
+/* Encabezados */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Formularios */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+    color: #555;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="submit"],
+input[type="text"],
+input[type="number"],
+textarea {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s;
+}
+
+input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Mensajes */
+.mensaje-exito {
+    text-align: center;
+    color: green;
+    margin-top: 10px;
+}
+
+.mensaje-error {
+    text-align: center;
+    color: red;
+    margin-top: 10px;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ccc;
+    text-align: center;
+    vertical-align: top;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Botones y enlaces */
+a, button {
+    text-decoration: none;
+    padding: 6px 12px;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+a:hover, button:hover {
+    background-color: #0056b3;
+}
+
+button[name="eliminar"] {
+    background-color: #dc3545;
+}
+
+button[name="eliminar"]:hover {
+    background-color: #c82333;
+}
+
+/* Diseño del panel de administración */
+.admin-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 40px;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.admin-form {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.admin-table {
+    flex: 2;
+    min-width: 400px;
+    overflow-x: auto;
+}
+
+.admin-buttons {
+    margin-bottom: 20px;
+}
+
+.admin-buttons button,
+.admin-buttons a {
+    margin-right: 10px;
+    display: inline-block;
+}
+
+/* Logo animado */
+.logo-biblioteca {
+    width: 200px;
+    margin: 0 auto 20px;
+    animation: aparecer 1s ease-in-out;
+}
+
+/* Animación de entrada */
+@keyframes aparecer {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Estilo para contenedor de bienvenida */
+.bienvenida-container {
+    text-align: center;
+    max-width: 600px;
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: aparecer 1s ease-in-out;
+}
+
+.bienvenida-container h1 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.bienvenida-container p {
+    margin-bottom: 30px;
+    color: #666;
+}
+
+.bienvenida-container img {
+    width: 200px;
+    margin-bottom: 20px;
+}
+
+.bienvenida-container a {
+    padding: 12px 24px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
+}
+
+.bienvenida-container a:hover {
+    background-color: #0056b3;
+}
