@@ -17,7 +17,7 @@ RUN rm -rf /var/www/html && ln -s /var/www/public/html /var/www/html
 RUN a2enmod rewrite
 
 # Cambia el DocumentRoot en la configuración de Apache
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/vistas/html|' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/public/html|' /etc/apache2/sites-available/000-default.conf
 
 # Expone el puerto por defecto de Apache
 EXPOSE 80
