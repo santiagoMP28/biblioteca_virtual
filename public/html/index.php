@@ -63,7 +63,7 @@
 </head>
 <body>
     <div class="bienvenida-container">
-    <img src="../img/logo.png" alt="Logo">
+    <img src="/img/logo.png" alt="Logo">
         <h1>Bienvenido a la Biblioteca Virtual</h1>
         <p>Explora, aprende y disfruta de nuestros recursos digitales, inicia sesión para continuar.</p>
         <a href="login.php">Iniciar sesión</a>
