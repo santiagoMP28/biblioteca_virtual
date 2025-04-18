@@ -3,6 +3,7 @@ session_start();
 
 // Inicializa variables
 $error = "";
+$correo = ""; // ← Esto es lo nuevo
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correo = $_POST["correo"] ?? '';
