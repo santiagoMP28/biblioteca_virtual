@@ -11,7 +11,7 @@ COPY . /var/www
 RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
 # Establecer vistas/html como carpeta pública
-RUN rm -rf /var/www/html && ln -s /var/www/vistas/html /var/www/html
+RUN rm -rf /var/www/html && ln -s /var/www/public/html /var/www/html
 
 # Habilita mod_rewrite por si usas .htaccess
 RUN a2enmod rewrite
