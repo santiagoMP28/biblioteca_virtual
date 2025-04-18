@@ -6,37 +6,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
 
-    // Conexión a la base de datos
-    $conn = new mysqli("localhost", "root", "", "bibliotecaV");
+    // Conexión a PostgreSQL en Render (usa variables de entorno en producción)
+    try {
+        $conn = new PDO(
+            "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a.oregon-postgres.render.com;" .
+            "dbname=bibliotecavi;" .
+            "sslmode=require",
+            'bibliotecavi_user',
+            'D5uyZglk0uUCVy4aT41y5kRHnHlfkRsY'
+        );
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ATTR_ERRMODE_EXCEPTION);
 
-    if ($conn->connect_error) {
-        die("Error de conexión: " . $conn->connect_error);
-    }
+        // Consulta segura con prepared statement
+        $stmt = $conn->prepare("SELECT id, correo, contraseña, rol FROM usuarios WHERE correo = :correo");
+        $stmt->bindParam(':correo', $correo);
+        $stmt->execute();
+        
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Consulta segura con prepared statements
-    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE correo=? AND contraseña=?");
-    $stmt->bind_param("ss", $correo, $contraseña);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
+        if ($usuario) {
+            // Verificar contraseña (asumiendo que está hasheada)
+            if (password_verify($contraseña, $usuario['contraseña'])) {
+                $_SESSION["id_usuario"] = $usuario["id"];
+                $_SESSION["rol"] = $usuario["rol"];
+                $_SESSION["correo"] = $usuario["correo"];
 
-    if ($resultado->num_rows > 0) {
-        $usuario = $resultado->fetch_assoc();
-        $_SESSION["id_usuario"] = $usuario["id"];
-        $_SESSION["rol"] = $usuario["rol"];
-
-        // Redirección según el rol
-        if ($usuario["rol"] == "admin") {
-            header("Location: admin.php");
+                // Redirección según el rol
+                header("Location: " . ($usuario["rol"] == "admin" ? "admin.php" : "usuario.php"));
+                exit;
+            } else {
+                $mensaje = "<p class='mensaje-error'>Correo o contraseña incorrectos.</p>";
+            }
         } else {
-            header("Location: usuario.php");
+            $mensaje = "<p class='mensaje-error'>Correo o contraseña incorrectos.</p>";
         }
-        exit;
-    } else {
-        $mensaje = "<p class='mensaje-error'>Correo o contraseña incorrectos.</p>";
+    } catch(PDOException $e) {
+        $mensaje = "<p class='mensaje-error'>Error de conexión: " . htmlspecialchars($e->getMessage()) . "</p>";
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
 
@@ -46,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <title>Iniciar Sesión</title>
     <link rel="stylesheet" href="/css/estilos.css">
-    </head>
+</head>
 <body>
     <div class="form-container">
         <h2>Iniciar Sesión</h2>
