@@ -4,28 +4,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
 
-    // Encripta la contraseña antes de guardarla
-    $contraseñaHash = password_hash($contraseña, PASSWORD_DEFAULT);
+    // Sanitizar correo
+    $correo = filter_var($correo, FILTER_SANITIZE_EMAIL);
 
-    try {
-        $conn = new PDO(
-            "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a.oregon-postgres.render.com;" .
-            "dbname=bibliotecavi;" .
-            "sslmode=require",
-            'bibliotecavi_user',
-            'D5uyZglk0uUCVy4aT41y5kRHnHlfkRsY'
-        );
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Verificar si el correo es válido
+    if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $mensaje = "<p class='mensaje-error'>Correo no válido. Por favor, ingresa un correo válido.</p>";
+    } else {
+        // Encripta la contraseña antes de guardarla
+        $contraseñaHash = password_hash($contraseña, PASSWORD_DEFAULT);
 
-        // Insertar usuario
-        $stmt = $conn->prepare("INSERT INTO usuarios (correo, contraseña, rol) VALUES (:correo, :contraseña, 'usuario')");
-        $stmt->bindParam(':correo', $correo);
-        $stmt->bindParam(':contraseña', $contraseñaHash);
-        $stmt->execute();
+        try {
+            $conn = new PDO(
+                "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a.oregon-postgres.render.com;" . 
+                "dbname=bibliotecavi;" . 
+                "sslmode=require",
+                'bibliotecavi_user',
+                'D5uyZglk0uUCVy4aT41y5kRHnHlfkRsY'
+            );
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $mensaje = "<p class='mensaje-exito'>Registro exitoso. <a href='login.php' class='btn'>Iniciar sesión</a></p>";
-    } catch (PDOException $e) {
-        $mensaje = "<p class='mensaje-error'>Error al registrar: " . htmlspecialchars($e->getMessage()) . "</p>";
+            // Verificar si el correo ya existe en la base de datos
+            $stmt = $conn->prepare("SELECT id FROM usuarios WHERE correo = :correo");
+            $stmt->bindParam(':correo', $correo);
+            $stmt->execute();
+
+            if ($stmt->rowCount() > 0) {
+                $mensaje = "<p class='mensaje-error'>Este correo ya está registrado. Por favor, usa otro.</p>";
+            } else {
+                // Insertar nuevo usuario
+                $stmt = $conn->prepare("INSERT INTO usuarios (correo, contraseña, rol) VALUES (:correo, :contraseña, 'usuario')");
+                $stmt->bindParam(':correo', $correo);
+                $stmt->bindParam(':contraseña', $contraseñaHash);
+                $stmt->execute();
+
+                $mensaje = "<p class='mensaje-exito'>Registro exitoso. <a href='login.php' class='btn'>Iniciar sesión</a></p>";
+            }
+        } catch (PDOException $e) {
+            $mensaje = "<p class='mensaje-error'>Error al registrar: " . htmlspecialchars($e->getMessage()) . "</p>";
+        }
     }
 }
 ?>

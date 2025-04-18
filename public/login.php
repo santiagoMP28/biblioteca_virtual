@@ -23,22 +23,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt = $conn->prepare("SELECT id, correo, contraseña, rol FROM usuarios WHERE correo = :correo");
         $stmt->bindParam(':correo', $correo);
         $stmt->execute();
+
+if ($stmt->rowCount() === 1) {
+    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (password_verify($contraseña, $usuario['contraseña'])) {
+        $_SESSION['usuario'] = [
+            'id' => $usuario['id'],
+            'correo' => $usuario['correo'],
+            'rol' => $usuario['rol']
+        ];
+
+        header('Location: ' . ($usuario['rol'] === 'admin' ? 'admin.php' : 'usuario.php'));
+        exit;
+    }
+}
+
         
-        if ($stmt->rowCount() === 1) {
-            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Verificación directa (texto plano)
-            if ($contraseña === $usuario['contraseña']) {
-                $_SESSION['usuario'] = [
-                    'id' => $usuario['id'],
-                    'correo' => $usuario['correo'],
-                    'rol' => $usuario['rol']
-                ];
-                
-                header('Location: ' . ($usuario['rol'] === 'admin' ? 'admin.php' : 'usuario.php'));
-                exit;
-            }
-        }
         
         $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
         
