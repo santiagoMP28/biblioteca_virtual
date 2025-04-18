@@ -2,5 +2,5 @@ services:
   - type: web
     name: biblioteca-digital
     env: docker
-    dockerfilePath: ./Dockerfile
     rootDir: .
+    dockerfilePath: Dockerfile
