@@ -24,30 +24,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(':correo', $correo);
         $stmt->execute();
 
-if ($stmt->rowCount() === 1) {
-    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (password_verify($contraseña, $usuario['contraseña'])) {
-        $_SESSION['usuario'] = [
-            'id' => $usuario['id'],
-            'correo' => $usuario['correo'],
-            'rol' => $usuario['rol']
-        ];
-
-        header('Location: ' . ($usuario['rol'] === 'admin' ? 'admin.php' : 'usuario.php'));
-        exit;
-    }
-}
-
+        if ($stmt->rowCount() === 1) {
+            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
         
+            if (password_verify($contraseña, $usuario['contraseña'])) {
+                $_SESSION['usuario'] = [
+                    'id' => $usuario['id'],
+                    'correo' => $usuario['correo'],
+                    'rol' => $usuario['rol']
+                ];
         
-        $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
+                header('Location: ' . ($usuario['rol'] === 'admin' ? 'admin.php' : 'usuario.php'));
+                exit;
+            } else {
+                $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
+            }
+        } else {
+            $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
+        }
         
-    } catch (PDOException $e) {
-        $error = "Error de conexión con la base de datos";
-        error_log("Error PDO: " . $e->getMessage());
-    }
-}
 ?>
 
 <!DOCTYPE html>
