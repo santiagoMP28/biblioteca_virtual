@@ -4,17 +4,12 @@ session_start();
 // Inicializa variables
 $error = "";
 
-// Verificación del driver
-if (!extension_loaded('pdo_pgsql')) {
-    die("Error: El sistema no está disponible temporalmente. Por favor, inténtalo más tarde.");
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correo = $_POST["correo"] ?? '';
     $contraseña = $_POST["contraseña"] ?? '';
 
     try {
-        // Conexión corregida
+        // Conexión a PostgreSQL en Render
         $conn = new PDO(
             "pgsql:host=dpg-d01a606uk2gs73dh2ft0-a;" .
             "dbname=bibliotecavi",
@@ -23,15 +18,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+        // Buscar usuario
         $stmt = $conn->prepare("SELECT id, correo, contraseña, rol FROM usuarios WHERE correo = :correo");
-        $stmt->bindParam(':correo', $correo, PDO::PARAM_STR);
+        $stmt->bindParam(':correo', $correo);
         $stmt->execute();
         
         if ($stmt->rowCount() === 1) {
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Verificación de contraseña
-            if ($contraseña === $usuario['contraseña'] || password_verify($contraseña, $usuario['contraseña'])) {
+            // Verificación directa (texto plano)
+            if ($contraseña === $usuario['contraseña']) {
                 $_SESSION['usuario'] = [
                     'id' => $usuario['id'],
                     'correo' => $usuario['correo'],
@@ -43,11 +39,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
         
-        $error = "Credenciales incorrectas";
+        $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
         
     } catch (PDOException $e) {
-        $error = "Error temporal. Por favor, inténtalo nuevamente.";
-        error_log("Error de conexión: " . $e->getMessage());
+        $error = "Error de conexión con la base de datos";
+        error_log("Error PDO: " . $e->getMessage());
     }
 }
 ?>
