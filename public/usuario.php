@@ -5,10 +5,7 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "usuario") {
     exit();
 }
 
-
-
-include_once(__DIR__ . '/../includes/conexion.php');
-
+include_once(__DIR__ . '/../includes/conexion.php'); // Asegúrate de que usa PDO
 
 ?>
 
@@ -18,7 +15,6 @@ include_once(__DIR__ . '/../includes/conexion.php');
     <meta charset="UTF-8">
     <title>Panel del Usuario</title>
     <link rel="stylesheet" href="../css/estilos.css">
-
 </head>
 <body>
     <h2>Bienvenido, Lector 👋</h2>
@@ -46,21 +42,26 @@ include_once(__DIR__ . '/../includes/conexion.php');
         </tr>
 
         <?php
-        $filtro = "";
+        $libros = [];
         if (isset($_GET['buscar']) && $_GET['buscar'] !== '') {
-            $buscar = $conexion->real_escape_string($_GET['buscar']);
-            $filtro = "WHERE titulo LIKE '%$buscar%' OR autor LIKE '%$buscar%'";
+            $buscar = '%' . $_GET['buscar'] . '%';
+            $stmt = $conexion->prepare("SELECT * FROM libros WHERE titulo LIKE :buscar OR autor LIKE :buscar ORDER BY titulo ASC");
+            $stmt->bindParam(':buscar', $buscar);
+        } else {
+            $stmt = $conexion->prepare("SELECT * FROM libros ORDER BY titulo ASC");
         }
 
-        $resultado = $conexion->query("SELECT * FROM libros $filtro ORDER BY titulo ASC");
-        if ($resultado->num_rows > 0) {
-            while ($libro = $resultado->fetch_assoc()) {
+        $stmt->execute();
+        $libros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($libros) > 0) {
+            foreach ($libros as $libro) {
                 echo "<tr>";
                 echo "<td>" . htmlspecialchars($libro['titulo']) . "</td>";
                 echo "<td>" . htmlspecialchars($libro['autor']) . "</td>";
                 echo "<td>" . htmlspecialchars($libro['descripcion']) . "</td>";
                 echo "<td>" . htmlspecialchars($libro['fecha_publicacion']) . "</td>";
-                echo "<td><a href='../../archivos/" . urlencode($libro['archivo']) . "' target='_blank'>📖 Leer</a></td>";
+                echo "<td><a href='../archivos/" . urlencode($libro['archivo_pdf']) . "' target='_blank'>📖 Leer</a></td>";
                 echo "</tr>";
             }
         } else {

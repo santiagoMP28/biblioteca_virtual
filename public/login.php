@@ -37,10 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header('Location: ' . ($usuario['rol'] === 'admin' ? 'admin.php' : 'usuario.php'));
                 exit;
             } else {
-                $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
+                $error = "Credenciales incorrectas.";
             }
         } else {
-            $error = "Credenciales incorrectas. Usa admin@admin.com y contraseña 'admin'";
+            $error = "Credenciales incorrectas.";
         }
 
     } catch (PDOException $e) {

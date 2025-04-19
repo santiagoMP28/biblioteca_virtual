@@ -25,8 +25,9 @@ if (isset($_POST['eliminar'])) {
         $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
         $eliminar->execute(['id' => $id]);
 
-        echo "<p style='color:red;'>🗑️ Libro eliminado correctamente.</p>";
-    }
+        header("Location: admin.php?mensaje=🗑️ Libro eliminado correctamente.");
+        exit();
+            }
 }
 
 // Subir libro
@@ -173,7 +174,10 @@ if (isset($_POST['subir'])) {
 
     <div class="sidebar">
         <h2>Admin</h2>
-        
+        <?php if (isset($_GET['mensaje'])): ?>
+    <p class="mensaje-exito"><?php echo htmlspecialchars($_GET['mensaje']); ?></p>
+<?php endif; ?>
+
         <a href="gestionar_usuarios.php">👥 Gestionar usuarios</a>
         <a href="logout.php">🔒 Cerrar sesión</a>
     </div>
@@ -201,7 +205,7 @@ if (isset($_POST['subir'])) {
                     <th>Descripción</th>
                     <th>Año</th>
                     <th>Leer</th>
-                    <th>Acción</th>
+                    <th>Acción</th> 
                 </tr>
 
                 <?php
