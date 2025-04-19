@@ -10,6 +10,11 @@ RUN apt-get update && \
 # Copiar todo el proyecto al contenedor
 COPY . /var/www
 
+# Asegúrate que tienes estos permisos:
+    RUN mkdir -p /tmp/archivos && \
+    chown -R www-data:www-data /tmp/archivos && \
+    chmod -R 755 /tmp/archivos
+
 # Configuración de Apache
 RUN rm -rf /var/www/html && \
     ln -s /var/www/public /var/www/html && \

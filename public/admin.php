@@ -7,7 +7,7 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "admin") {
 
 include(__DIR__ . '/../includes/conexion.php');
 
-// Configuración de rutas para Render.com
+// Configuración de rutas para archivos
 define('RUTA_ARCHIVOS', '/tmp/archivos/');
 define('RUTA_PUBLICA_ARCHIVOS', '/archivos/');
 
@@ -225,6 +225,20 @@ if (isset($_POST['subir'])) {
             opacity: 1;
         }
 
+        /* Estilos para enlaces PDF */
+        .enlace-pdf {
+            color: #1a73e8;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .enlace-pdf:hover {
+            text-decoration: underline;
+        }
+        .error-pdf {
+            color: #f44336;
+            font-size: 0.9em;
+        }
+
         @keyframes slideIn {
             from { 
                 opacity: 0;
@@ -298,6 +312,7 @@ if (isset($_POST['subir'])) {
                     foreach ($libros as $libro): 
                         $ruta_pdf = RUTA_ARCHIVOS . $libro['archivo_pdf'];
                         $url_pdf = RUTA_PUBLICA_ARCHIVOS . rawurlencode($libro['archivo_pdf']);
+                        $url_fallback = '/serve-pdf.php?id=' . (int)$libro['id'];
                         ?>
                         <tr>
                             <td><?= htmlspecialchars($libro['titulo'] ?? '') ?></td>
@@ -305,10 +320,14 @@ if (isset($_POST['subir'])) {
                             <td><?= htmlspecialchars($libro['descripcion'] ?? '') ?></td>
                             <td><?= htmlspecialchars($libro['anio_publicacion'] ?? '—') ?></td>
                             <td>
-                                <?php if (!empty($libro['archivo_pdf']) && file_exists($ruta_pdf)): ?>
-                                    <a href="<?= $url_pdf ?>" target="_blank">📄 Ver PDF</a>
-                                <?php elseif (!empty($libro['archivo_pdf'])): ?>
-                                    <span style="color:orange">PDF no encontrado</span>
+                                <?php if (!empty($libro['archivo_pdf'])): ?>
+                                    <?php if (file_exists($ruta_pdf)): ?>
+                                        <a href="<?= htmlspecialchars($url_pdf) ?>" target="_blank" class="enlace-pdf">📄 Ver PDF</a>
+                                        <span style="display:none;"><a href="<?= htmlspecialchars($url_fallback) ?>" class="fallback-link"></a></span>
+                                    <?php else: ?>
+                                        <a href="<?= htmlspecialchars($url_fallback) ?>" target="_blank" class="enlace-pdf">📄 Ver PDF (alternativo)</a>
+                                        <span class="error-pdf">(Archivo temporal no encontrado)</span>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     —
                                 <?php endif; ?>
@@ -340,6 +359,31 @@ if (isset($_POST['subir'])) {
                     setTimeout(() => mensaje.remove(), 300);
                 }, 5000);
             }
+            
+            // Detectar si los enlaces PDF no funcionan y cambiar al alternativo
+            document.querySelectorAll('.enlace-pdf').forEach(enlace => {
+                enlace.addEventListener('click', function(e) {
+                    if (this.href.includes('/archivos/')) {
+                        fetch(this.href, { method: 'HEAD' })
+                            .then(response => {
+                                if (!response.ok) {
+                                    const fallback = this.closest('td').querySelector('.fallback-link');
+                                    if (fallback) {
+                                        window.open(fallback.href, '_blank');
+                                        e.preventDefault();
+                                    }
+                                }
+                            })
+                            .catch(() => {
+                                const fallback = this.closest('td').querySelector('.fallback-link');
+                                if (fallback) {
+                                    window.open(fallback.href, '_blank');
+                                    e.preventDefault();
+                                }
+                            });
+                    }
+                });
+            });
         });
 
         function cerrarMensaje(elemento) {
