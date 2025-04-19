@@ -48,8 +48,8 @@ if (isset($_POST['eliminar'])) {
         <tbody>
             <?php
             $resultado = $conexion->query("SELECT * FROM usuarios ORDER BY correo ASC");
-            if ($resultado->num_rows > 0) {
-                while ($usuario = $resultado->fetch_assoc()) {
+            if ($resultado->rowCount() > 0) {
+                while ($usuario = $resultado->fetch(PDO::FETCH_ASSOC)) {
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($usuario['correo']) . "</td>";
                     echo "<td>" . htmlspecialchars($usuario['rol']) . "</td>";

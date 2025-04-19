@@ -11,7 +11,7 @@ include(__DIR__ . '/../includes/conexion.php');
 if (isset($_POST['eliminar'])) {
     $id = $_POST['id'];
 
-    $consulta = $conexion->prepare("SELECT archivo FROM libros WHERE id = :id");
+    $consulta = $conexion->prepare("SELECT archivo_pdf FROM libros WHERE id = :id");
     $consulta->execute(['id' => $id]);
     $fila = $consulta->fetch(PDO::FETCH_ASSOC);
 
@@ -210,10 +210,10 @@ if (isset($_POST['subir'])) {
                     foreach ($libros as $libro) {
                 
                         echo "<tr>";
-                        echo "<td>" . htmlspecialchars($libro['titulo']) . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['autor']) . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['descripcion']) . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['fecha_publicacion']) . "</td>";
+                        echo "<td>" . htmlspecialchars($libro['titulo'] ?? '') . "</td>";
+                        echo "<td>" . htmlspecialchars($libro['autor'] ?? '') . "</td>";
+                        echo "<td>" . htmlspecialchars($libro['descripcion'] ?? '') . "</td>";
+                        echo "<td>" . htmlspecialchars($libro['fecha_publicacion'] ?? '—') . "</td>";
                         echo "<td>";
                         if (!empty($libro['archivo'])) {
                             echo "<a href='../../archivos/" . htmlspecialchars($libro['archivo']) . "' target='_blank'>📄 Ver PDF</a>";
