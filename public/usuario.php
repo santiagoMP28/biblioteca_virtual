@@ -60,7 +60,7 @@ include_once(__DIR__ . '/../includes/conexion.php'); // Asegúrate de que usa PD
                 echo "<td>" . htmlspecialchars($libro['titulo']) . "</td>";
                 echo "<td>" . htmlspecialchars($libro['autor']) . "</td>";
                 echo "<td>" . htmlspecialchars($libro['descripcion']) . "</td>";
-                echo "<td>" . htmlspecialchars($libro['fecha_publicacion']) . "</td>";
+                echo "<td>" . htmlspecialchars($libro['anio_publicacion'] ?? '—') . "</td>";                        echo "<td>";
                 echo "<td><a href='../archivos/" . urlencode($libro['archivo_pdf']) . "' target='_blank'>📖 Leer</a></td>";
                 echo "</tr>";
             }

@@ -35,7 +35,7 @@ if (isset($_POST['subir'])) {
     $titulo = $_POST['titulo'];
     $autor = $_POST['autor'];
     $descripcion = $_POST['descripcion'];
-    $fecha = $_POST['fecha_publicacion'];
+    $anio_publicacion = (int)$_POST['fecha_publicacion']; 
 
     $verificar = $conexion->prepare("SELECT * FROM libros WHERE titulo = :titulo AND autor = :autor");
     $verificar->execute(['titulo' => $titulo, 'autor' => $autor]);
@@ -50,13 +50,13 @@ if (isset($_POST['subir'])) {
 
 
         if (move_uploaded_file($archivoTmp, $destino)) {
-            $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, fecha_publicacion, archivo_pdf)
-                                       VALUES (:titulo, :autor, :descripcion, :fecha, :archivo)");
+            $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, anio_publicacion, archivo_pdf)
+                           VALUES (:titulo, :autor, :descripcion, :anio, :archivo)");
             $sql->execute([
                 'titulo' => $titulo,
                 'autor' => $autor,
                 'descripcion' => $descripcion,
-                'fecha' => $fecha,
+                'anio' => $anio_publicacion,
                 'archivo' => $archivoNombre
             ]);
 
@@ -219,8 +219,7 @@ if (isset($_POST['subir'])) {
                         echo "<td>" . htmlspecialchars($libro['titulo'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($libro['autor'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($libro['descripcion'] ?? '') . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['fecha_publicacion'] ?? '—') . "</td>";
-                        echo "<td>";
+                        echo "<td>" . htmlspecialchars($libro['anio_publicacion'] ?? '—') . "</td>";                        echo "<td>";
                         if (!empty($libro['archivo_pdf'])) {
                             echo "<a href='../archivos/" . htmlspecialchars($libro['archivo_pdf']) . "' target='_blank'>📄 Ver PDF</a>";
                         }
