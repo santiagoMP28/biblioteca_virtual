@@ -16,10 +16,11 @@ if (isset($_POST['eliminar'])) {
     $fila = $consulta->fetch(PDO::FETCH_ASSOC);
 
     if ($fila) {
-        $archivo = $fila['archivo'];
-        if (!empty($archivo) && file_exists("../../archivos/$archivo")) {
-            unlink("../../archivos/$archivo");
+        $archivo = $fila['archivo_pdf'];
+        if (!empty($archivo) && file_exists(__DIR__ . "/../archivos/$archivo")) {
+            unlink(__DIR__ . "/../archivos/$archivo");
         }
+        
 
         $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
         $eliminar->execute(['id' => $id]);
@@ -44,10 +45,11 @@ if (isset($_POST['subir'])) {
         $archivoNombreOriginal = $_FILES['archivo']['name'];
         $archivoTmp = $_FILES['archivo']['tmp_name'];
         $archivoNombre = time() . "_" . basename($archivoNombreOriginal);
-        $destino = "../../archivos/" . $archivoNombre;
+        $destino = __DIR__ . "/../archivos/" . $archivoNombre;
+
 
         if (move_uploaded_file($archivoTmp, $destino)) {
-            $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, fecha_publicacion, archivo)
+            $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, fecha_publicacion, archivo_pdf)
                                        VALUES (:titulo, :autor, :descripcion, :fecha, :archivo)");
             $sql->execute([
                 'titulo' => $titulo,
@@ -215,9 +217,10 @@ if (isset($_POST['subir'])) {
                         echo "<td>" . htmlspecialchars($libro['descripcion'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($libro['fecha_publicacion'] ?? '—') . "</td>";
                         echo "<td>";
-                        if (!empty($libro['archivo'])) {
-                            echo "<a href='../../archivos/" . htmlspecialchars($libro['archivo']) . "' target='_blank'>📄 Ver PDF</a>";
-                        } else {
+                        if (!empty($libro['archivo_pdf'])) {
+                            echo "<a href='../archivos/" . htmlspecialchars($libro['archivo_pdf']) . "' target='_blank'>📄 Ver PDF</a>";
+                        }
+                         else {
                             echo "—";
                         }
                         echo "</td>";

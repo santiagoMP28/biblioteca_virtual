@@ -7,19 +7,21 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "admin") {
 
 include(__DIR__ . '/../includes/conexion.php');
 
+$mensaje = '';
+
 // Eliminar usuario
-if (isset($_POST['eliminar'])) {
+if (isset($_POST['eliminar']) && isset($_POST['id'])) {
     $id = $_POST['id'];
 
-    if ($id == $_SESSION['id_usuario']) {
-        echo "<p style='color:red; font-weight: bold;'>⚠️ No puedes eliminar tu propio usuario.</p>";
+    if ($id == $_SESSION['usuario']['id']) {
+        $mensaje = "<p style='color:red; font-weight: bold;'>⚠️ No puedes eliminar tu propio usuario.</p>";
     } else {
-        $conexion->query("DELETE FROM usuarios WHERE id = $id");
-        echo "<p style='color:green; font-weight: bold;'>✅ Usuario eliminado correctamente.</p>";
+        $stmt = $conexion->prepare("DELETE FROM usuarios WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        $mensaje = "<p style='color:green; font-weight: bold;'>✅ Usuario eliminado correctamente.</p>";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,13 +31,14 @@ if (isset($_POST['eliminar'])) {
 </head>
 <body>
     <h2>👥 Gestión de Usuarios del Sistema</h2>
-    
-    
+
     <nav>
         <a href='admin.php'>🔙 Volver al panel principal</a> | 
         <a href='logout.php'>🚪 Cerrar sesión</a>
     </nav>
     <br>
+
+    <?= $mensaje ?>
 
     <table border="1" cellpadding="10" cellspacing="0">
         <thead style="background-color: #f0f0f0;">
@@ -55,7 +58,7 @@ if (isset($_POST['eliminar'])) {
                     echo "<td>" . htmlspecialchars($usuario['rol']) . "</td>";
                     echo "<td>";
 
-                    if ($usuario['id'] != $_SESSION['id_usuario']) {
+                    if ($usuario['id'] != $_SESSION['usuario']['id']) {
                         echo "<form method='POST' action='gestionar_usuarios.php' onsubmit=\"return confirm('¿Estás seguro de eliminar este usuario?');\">
                                 <input type='hidden' name='id' value='" . $usuario['id'] . "'>
                                 <button type='submit' name='eliminar'>🗑️ Eliminar</button>
