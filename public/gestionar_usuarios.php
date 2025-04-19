@@ -1,11 +1,11 @@
 <?php
 session_start();
-if (!isset($_SESSION["rol"]) || $_SESSION["rol"] != "admin") {
+if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "admin") {
     header("Location: login.php");
     exit();
 }
 
-include("../../includes/conexion.php");
+include(__DIR__ . '/../includes/conexion.php');
 
 // Eliminar usuario
 if (isset($_POST['eliminar'])) {
