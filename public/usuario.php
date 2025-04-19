@@ -1,11 +1,14 @@
 <?php
 session_start();
-if (!isset($_SESSION["rol"]) || $_SESSION["rol"] != "usuario") {
+if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "usuario") {
     header("Location: login.php");
     exit();
 }
 
-include("../../includes/conexion.php");
+
+
+include(__DIR__ . '/../includes/conexion.php');
+
 ?>
 
 <!DOCTYPE html>
