@@ -21,13 +21,12 @@ if (isset($_POST['eliminar'])) {
             unlink(__DIR__ . "/../archivos/$archivo");
         }
         
-
         $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
         $eliminar->execute(['id' => $id]);
 
         header("Location: admin.php?mensaje=🗑️ Libro eliminado correctamente.");
         exit();
-            }
+    }
 }
 
 // Subir libro
@@ -41,13 +40,12 @@ if (isset($_POST['subir'])) {
     $verificar->execute(['titulo' => $titulo, 'autor' => $autor]);
 
     if ($verificar->rowCount() > 0) {
-        echo "<p style='color:red;'>⚠️ El libro ya existe.</p>";
+        echo '<div class="mensaje-error">⚠️ El libro ya existe. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
     } else {
         $archivoNombreOriginal = $_FILES['archivo']['name'];
         $archivoTmp = $_FILES['archivo']['tmp_name'];
         $archivoNombre = time() . "_" . basename($archivoNombreOriginal);
         $destino = __DIR__ . "/../archivos/" . $archivoNombre;
-
 
         if (move_uploaded_file($archivoTmp, $destino)) {
             $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, anio_publicacion, archivo_pdf)
@@ -60,14 +58,13 @@ if (isset($_POST['subir'])) {
                 'archivo' => $archivoNombre
             ]);
 
-            echo "<p style='color:green;'>✅ Libro subido correctamente.</p>";
+            echo '<div class="mensaje-exito">✅ Libro subido correctamente. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
         } else {
-            echo "<p style='color:red;'>❌ Error al subir el archivo PDF.</p>";
+            echo '<div class="mensaje-error">❌ Error al subir el archivo PDF. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
         }
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="es">
@@ -168,6 +165,62 @@ if (isset($_POST['subir'])) {
         form button:hover {
             background-color: darkgreen;
         }
+
+        /* Estilos para mensajes */
+        .mensaje-exito {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .mensaje-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .mensaje-exito .cerrar,
+        .mensaje-error .cerrar {
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 15px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .mensaje-exito .cerrar {
+            color: #155724;
+        }
+
+        .mensaje-error .cerrar {
+            color: #721c24;
+        }
+
+        .mensaje-exito .cerrar:hover,
+        .mensaje-error .cerrar:hover {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -175,8 +228,11 @@ if (isset($_POST['subir'])) {
     <div class="sidebar">
         <h2>Admin</h2>
         <?php if (isset($_GET['mensaje'])): ?>
-    <p class="mensaje-exito"><?php echo htmlspecialchars($_GET['mensaje']); ?></p>
-<?php endif; ?>
+            <div class="mensaje-exito">
+                <span><?php echo htmlspecialchars($_GET['mensaje']); ?></span>
+                <span class="cerrar" onclick="this.parentElement.remove()">×</span>
+            </div>
+        <?php endif; ?>
 
         <a href="gestionar_usuarios.php">👥 Gestionar usuarios</a>
         <a href="logout.php">🔒 Cerrar sesión</a>
@@ -189,7 +245,7 @@ if (isset($_POST['subir'])) {
                 <input type="text" name="titulo" placeholder="Título del libro" required>
                 <input type="text" name="autor" placeholder="Autor" required>
                 <textarea name="descripcion" placeholder="Descripción"></textarea>
-                <input type="number" name="fecha_publicacion" placeholder="Año de publicación" min="1000" max="9999" required>
+                <input type="number" name="fecha_publicacion" placeholder="Año de publicación" min="1000" max="<?php echo date('Y'); ?>" required>
                 <label>Archivo PDF del libro:</label>
                 <input type="file" name="archivo" accept=".pdf" required>
                 <button type="submit" name="subir">📤 Subir libro</button>
@@ -214,16 +270,15 @@ if (isset($_POST['subir'])) {
                 
                 if (count($libros) > 0) {
                     foreach ($libros as $libro) {
-                
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars($libro['titulo'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($libro['autor'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($libro['descripcion'] ?? '') . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['anio_publicacion'] ?? '—') . "</td>";                        echo "<td>";
+                        echo "<td>" . htmlspecialchars($libro['anio_publicacion'] ?? '—') . "</td>";
+                        echo "<td>";
                         if (!empty($libro['archivo_pdf'])) {
                             echo "<a href='../archivos/" . htmlspecialchars($libro['archivo_pdf']) . "' target='_blank'>📄 Ver PDF</a>";
-                        }
-                         else {
+                        } else {
                             echo "—";
                         }
                         echo "</td>";
