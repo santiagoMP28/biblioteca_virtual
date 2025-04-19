@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Insertar nuevo usuario
                 $stmt = $conn->prepare("INSERT INTO usuarios (correo, contraseña, rol) VALUES (:correo, :contraseña, 'usuario')");
                 $stmt->bindParam(':correo', $correo);
-                $stmt->bindParam(':password', $contraseñaHash);
+                $stmt->bindParam(':contraseña', $contraseñaHash);
                 $stmt->execute();
 
                 $mensaje = "<p class='mensaje-exito'>Registro exitoso. <a href='login.php' class='btn'>Iniciar sesión</a></p>";

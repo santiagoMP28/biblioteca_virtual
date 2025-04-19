@@ -10,15 +10,22 @@ include(__DIR__ . '/../includes/conexion.php');
 // Eliminar libro
 if (isset($_POST['eliminar'])) {
     $id = $_POST['id'];
-    $consulta = $conexion->query("SELECT archivo FROM libros WHERE id = $id");
-    if ($consulta && $fila = $consulta->fetch_assoc()) {
+
+    $consulta = $conexion->prepare("SELECT archivo FROM libros WHERE id = :id");
+    $consulta->execute(['id' => $id]);
+    $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+
+    if ($fila) {
         $archivo = $fila['archivo'];
         if (!empty($archivo) && file_exists("../../archivos/$archivo")) {
             unlink("../../archivos/$archivo");
         }
+
+        $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
+        $eliminar->execute(['id' => $id]);
+
+        echo "<p style='color:red;'>🗑️ Libro eliminado correctamente.</p>";
     }
-    $conexion->query("DELETE FROM libros WHERE id = $id");
-    echo "<p style='color:red;'>🗑️ Libro eliminado correctamente.</p>";
 }
 
 // Subir libro
@@ -27,8 +34,11 @@ if (isset($_POST['subir'])) {
     $autor = $_POST['autor'];
     $descripcion = $_POST['descripcion'];
     $fecha = $_POST['fecha_publicacion'];
-    $verificar = $conexion->query("SELECT * FROM libros WHERE titulo = '$titulo' AND autor = '$autor'");
-    if ($verificar->num_rows > 0) {
+
+    $verificar = $conexion->prepare("SELECT * FROM libros WHERE titulo = :titulo AND autor = :autor");
+    $verificar->execute(['titulo' => $titulo, 'autor' => $autor]);
+
+    if ($verificar->rowCount() > 0) {
         echo "<p style='color:red;'>⚠️ El libro ya existe.</p>";
     } else {
         $archivoNombreOriginal = $_FILES['archivo']['name'];
@@ -37,9 +47,16 @@ if (isset($_POST['subir'])) {
         $destino = "../../archivos/" . $archivoNombre;
 
         if (move_uploaded_file($archivoTmp, $destino)) {
-            $sql = "INSERT INTO libros (titulo, autor, descripcion, fecha_publicacion, archivo)
-                    VALUES ('$titulo', '$autor', '$descripcion', '$fecha', '$archivoNombre')";
-            $conexion->query($sql);
+            $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, fecha_publicacion, archivo)
+                                       VALUES (:titulo, :autor, :descripcion, :fecha, :archivo)");
+            $sql->execute([
+                'titulo' => $titulo,
+                'autor' => $autor,
+                'descripcion' => $descripcion,
+                'fecha' => $fecha,
+                'archivo' => $archivoNombre
+            ]);
+
             echo "<p style='color:green;'>✅ Libro subido correctamente.</p>";
         } else {
             echo "<p style='color:red;'>❌ Error al subir el archivo PDF.</p>";
@@ -47,6 +64,7 @@ if (isset($_POST['subir'])) {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
@@ -186,8 +204,11 @@ if (isset($_POST['subir'])) {
 
                 <?php
                 $resultado = $conexion->query("SELECT * FROM libros");
-                if ($resultado->num_rows > 0) {
-                    while ($libro = $resultado->fetch_assoc()) {
+                $libros = $resultado->fetchAll(PDO::FETCH_ASSOC);
+                
+                if (count($libros) > 0) {
+                    foreach ($libros as $libro) {
+                
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars($libro['titulo']) . "</td>";
                         echo "<td>" . htmlspecialchars($libro['autor']) . "</td>";

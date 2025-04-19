@@ -7,7 +7,8 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "usuario") {
 
 
 
-include(__DIR__ . '/../includes/conexion.php');
+include_once(__DIR__ . '/../includes/conexion.php');
+
 
 ?>
 
