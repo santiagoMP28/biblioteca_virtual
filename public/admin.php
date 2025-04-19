@@ -24,7 +24,8 @@ if (isset($_POST['eliminar'])) {
         $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
         $eliminar->execute(['id' => $id]);
 
-        header("Location: admin.php?mensaje=🗑️ Libro eliminado correctamente.");
+        $_SESSION['mensaje'] = ['texto' => '🗑️ Libro eliminado correctamente', 'tipo' => 'exito'];
+        header("Location: admin.php");
         exit();
     }
 }
@@ -40,7 +41,7 @@ if (isset($_POST['subir'])) {
     $verificar->execute(['titulo' => $titulo, 'autor' => $autor]);
 
     if ($verificar->rowCount() > 0) {
-        echo '<div class="mensaje-error">⚠️ El libro ya existe. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
+        $_SESSION['mensaje'] = ['texto' => '⚠️ El libro ya existe', 'tipo' => 'error'];
     } else {
         $archivoNombreOriginal = $_FILES['archivo']['name'];
         $archivoTmp = $_FILES['archivo']['tmp_name'];
@@ -58,9 +59,9 @@ if (isset($_POST['subir'])) {
                 'archivo' => $archivoNombre
             ]);
 
-            echo '<div class="mensaje-exito">✅ Libro subido correctamente. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
+            $_SESSION['mensaje'] = ['texto' => '✅ Libro subido correctamente', 'tipo' => 'exito'];
         } else {
-            echo '<div class="mensaje-error">❌ Error al subir el archivo PDF. <span class="cerrar" onclick="this.parentElement.remove()">×</span></div>';
+            $_SESSION['mensaje'] = ['texto' => '❌ Error al subir el archivo PDF', 'tipo' => 'error'];
         }
     }
 }
@@ -111,6 +112,7 @@ if (isset($_POST['subir'])) {
             flex-grow: 1;
             padding: 30px;
             background-color: #f5f7fa;
+            position: relative;
         }
 
         .form-section, .table-section {
@@ -167,59 +169,65 @@ if (isset($_POST['subir'])) {
         }
 
         /* Estilos para mensajes */
-        .mensaje-exito {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin: 15px 0;
-            border: 1px solid #c3e6cb;
+        .mensaje-flotante {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            animation: fadeIn 0.3s ease-in-out;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+
+        .mensaje-exito {
+            background-color: #4CAF50;
+            color: white;
+            border-left: 5px solid #2E7D32;
         }
 
         .mensaje-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin: 15px 0;
-            border: 1px solid #f5c6cb;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            animation: fadeIn 0.3s ease-in-out;
+            background-color: #F44336;
+            color: white;
+            border-left: 5px solid #C62828;
         }
 
-        .mensaje-exito .cerrar,
-        .mensaje-error .cerrar {
+        .cerrar-mensaje {
             cursor: pointer;
-            font-size: 18px;
             margin-left: 15px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+            font-weight: bold;
+            font-size: 20px;
+            opacity: 0.8;
         }
 
-        .mensaje-exito .cerrar {
-            color: #155724;
-        }
-
-        .mensaje-error .cerrar {
-            color: #721c24;
-        }
-
-        .mensaje-exito .cerrar:hover,
-        .mensaje-error .cerrar:hover {
+        .cerrar-mensaje:hover {
             opacity: 1;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            from { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to { 
+                opacity: 0;
+                transform: translateX(100%);
+            }
         }
     </style>
 </head>
@@ -227,13 +235,6 @@ if (isset($_POST['subir'])) {
 
     <div class="sidebar">
         <h2>Admin</h2>
-        <?php if (isset($_GET['mensaje'])): ?>
-            <div class="mensaje-exito">
-                <span><?php echo htmlspecialchars($_GET['mensaje']); ?></span>
-                <span class="cerrar" onclick="this.parentElement.remove()">×</span>
-            </div>
-        <?php endif; ?>
-
         <a href="gestionar_usuarios.php">👥 Gestionar usuarios</a>
         <a href="logout.php">🔒 Cerrar sesión</a>
     </div>
@@ -298,5 +299,33 @@ if (isset($_POST['subir'])) {
         </div>
     </div>
 
+    <?php
+    // Mostrar mensaje flotante si existe
+    if (isset($_SESSION['mensaje'])) {
+        $mensaje = $_SESSION['mensaje'];
+        unset($_SESSION['mensaje']);
+        echo "
+        <div class='mensaje-flotante mensaje-{$mensaje['tipo']}'>
+            <span>{$mensaje['texto']}</span>
+            <span class='cerrar-mensaje' onclick='cerrarMensaje(this)'>×</span>
+        </div>
+        <script>
+            function cerrarMensaje(elemento) {
+                elemento.parentElement.style.animation = 'slideOut 0.3s forwards';
+                setTimeout(() => elemento.parentElement.remove(), 300);
+            }
+            
+            // Auto-cierre después de 5 segundos
+            setTimeout(() => {
+                const mensaje = document.querySelector('.mensaje-flotante');
+                if (mensaje) {
+                    mensaje.style.animation = 'slideOut 0.3s forwards';
+                    setTimeout(() => mensaje.remove(), 300);
+                }
+            }, 5000);
+        </script>
+        ";
+    }
+    ?>
 </body>
 </html>
