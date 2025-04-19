@@ -7,6 +7,15 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["usuario"]["rol"] != "admin") {
 
 include(__DIR__ . '/../includes/conexion.php');
 
+// Configuración de rutas para Render.com
+define('RUTA_ARCHIVOS', '/tmp/archivos/');
+define('RUTA_PUBLICA_ARCHIVOS', '/archivos/');
+
+// Crear directorio si no existe
+if (!file_exists(RUTA_ARCHIVOS)) {
+    mkdir(RUTA_ARCHIVOS, 0755, true);
+}
+
 // Eliminar libro
 if (isset($_POST['eliminar'])) {
     $id = $_POST['id'];
@@ -17,8 +26,8 @@ if (isset($_POST['eliminar'])) {
 
     if ($fila) {
         $archivo = $fila['archivo_pdf'];
-        if (!empty($archivo) && file_exists(__DIR__ . "/../archivos/$archivo")) {
-            unlink(__DIR__ . "/../archivos/$archivo");
+        if (!empty($archivo) && file_exists(RUTA_ARCHIVOS . $archivo)) {
+            unlink(RUTA_ARCHIVOS . $archivo);
         }
         
         $eliminar = $conexion->prepare("DELETE FROM libros WHERE id = :id");
@@ -37,6 +46,14 @@ if (isset($_POST['subir'])) {
     $descripcion = $_POST['descripcion'];
     $anio_publicacion = (int)$_POST['fecha_publicacion']; 
 
+    // Validar tipo de archivo
+    $extension = strtolower(pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION));
+    if ($extension != 'pdf') {
+        $_SESSION['mensaje'] = ['texto' => '❌ Solo se permiten archivos PDF', 'tipo' => 'error'];
+        header("Location: admin.php");
+        exit();
+    }
+
     $verificar = $conexion->prepare("SELECT * FROM libros WHERE titulo = :titulo AND autor = :autor");
     $verificar->execute(['titulo' => $titulo, 'autor' => $autor]);
 
@@ -46,8 +63,8 @@ if (isset($_POST['subir'])) {
         $archivoNombreOriginal = $_FILES['archivo']['name'];
         $archivoTmp = $_FILES['archivo']['tmp_name'];
         $archivoNombre = time() . "_" . basename($archivoNombreOriginal);
-        $destino = __DIR__ . "/../archivos/" . $archivoNombre;
-
+        $destino = RUTA_ARCHIVOS . $archivoNombre;
+        
         if (move_uploaded_file($archivoTmp, $destino)) {
             $sql = $conexion->prepare("INSERT INTO libros (titulo, autor, descripcion, anio_publicacion, archivo_pdf)
                            VALUES (:titulo, :autor, :descripcion, :anio, :archivo)");
@@ -240,13 +257,21 @@ if (isset($_POST['subir'])) {
     </div>
 
     <div class="content">
+        <?php if (isset($_SESSION['mensaje'])): ?>
+            <div class="mensaje-flotante mensaje-<?= $_SESSION['mensaje']['tipo'] ?>">
+                <span><?= htmlspecialchars($_SESSION['mensaje']['texto']) ?></span>
+                <span class="cerrar-mensaje" onclick="this.parentElement.remove()">×</span>
+            </div>
+            <?php unset($_SESSION['mensaje']); ?>
+        <?php endif; ?>
+
         <div class="form-section">
             <h3>📚 Subir nuevo libro</h3>
             <form method="POST" action="admin.php" enctype="multipart/form-data">
                 <input type="text" name="titulo" placeholder="Título del libro" required>
                 <input type="text" name="autor" placeholder="Autor" required>
                 <textarea name="descripcion" placeholder="Descripción"></textarea>
-                <input type="number" name="fecha_publicacion" placeholder="Año de publicación" min="1000" max="<?php echo date('Y'); ?>" required>
+                <input type="number" name="fecha_publicacion" placeholder="Año de publicación" min="1000" max="<?= date('Y') ?>" required>
                 <label>Archivo PDF del libro:</label>
                 <input type="file" name="archivo" accept=".pdf" required>
                 <button type="submit" name="subir">📤 Subir libro</button>
@@ -266,66 +291,61 @@ if (isset($_POST['subir'])) {
                 </tr>
 
                 <?php
-                $resultado = $conexion->query("SELECT * FROM libros");
+                $resultado = $conexion->query("SELECT * FROM libros ORDER BY titulo ASC");
                 $libros = $resultado->fetchAll(PDO::FETCH_ASSOC);
                 
-                if (count($libros) > 0) {
-                    foreach ($libros as $libro) {
-                        echo "<tr>";
-                        echo "<td>" . htmlspecialchars($libro['titulo'] ?? '') . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['autor'] ?? '') . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['descripcion'] ?? '') . "</td>";
-                        echo "<td>" . htmlspecialchars($libro['anio_publicacion'] ?? '—') . "</td>";
-                        echo "<td>";
-                        if (!empty($libro['archivo_pdf'])) {
-                            echo "<a href='../archivos/" . htmlspecialchars($libro['archivo_pdf']) . "' target='_blank'>📄 Ver PDF</a>";
-                        } else {
-                            echo "—";
-                        }
-                        echo "</td>";
-                        echo "<td>
-                                <form method='POST' action='admin.php' onsubmit=\"return confirm('¿Estás seguro de eliminar este libro?');\">
-                                    <input type='hidden' name='id' value='" . $libro['id'] . "'>
-                                    <button type='submit' name='eliminar'>🗑️ Eliminar</button>
+                if (count($libros) > 0): 
+                    foreach ($libros as $libro): 
+                        $ruta_pdf = RUTA_ARCHIVOS . $libro['archivo_pdf'];
+                        $url_pdf = RUTA_PUBLICA_ARCHIVOS . rawurlencode($libro['archivo_pdf']);
+                        ?>
+                        <tr>
+                            <td><?= htmlspecialchars($libro['titulo'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($libro['autor'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($libro['descripcion'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($libro['anio_publicacion'] ?? '—') ?></td>
+                            <td>
+                                <?php if (!empty($libro['archivo_pdf']) && file_exists($ruta_pdf)): ?>
+                                    <a href="<?= $url_pdf ?>" target="_blank">📄 Ver PDF</a>
+                                <?php elseif (!empty($libro['archivo_pdf'])): ?>
+                                    <span style="color:orange">PDF no encontrado</span>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <form method="POST" action="admin.php" onsubmit="return confirm('¿Estás seguro de eliminar este libro?');">
+                                    <input type="hidden" name="id" value="<?= $libro['id'] ?>">
+                                    <button type="submit" name="eliminar">🗑️ Eliminar</button>
                                 </form>
-                              </td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6'>No hay libros registrados.</td></tr>";
-                }
-                ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; 
+                else: ?>
+                    <tr>
+                        <td colspan="6">No hay libros registrados.</td>
+                    </tr>
+                <?php endif; ?>
             </table>
         </div>
     </div>
 
-    <?php
-    // Mostrar mensaje flotante si existe
-    if (isset($_SESSION['mensaje'])) {
-        $mensaje = $_SESSION['mensaje'];
-        unset($_SESSION['mensaje']);
-        echo "
-        <div class='mensaje-flotante mensaje-{$mensaje['tipo']}'>
-            <span>{$mensaje['texto']}</span>
-            <span class='cerrar-mensaje' onclick='cerrarMensaje(this)'>×</span>
-        </div>
-        <script>
-            function cerrarMensaje(elemento) {
-                elemento.parentElement.style.animation = 'slideOut 0.3s forwards';
-                setTimeout(() => elemento.parentElement.remove(), 300);
-            }
-            
-            // Auto-cierre después de 5 segundos
-            setTimeout(() => {
-                const mensaje = document.querySelector('.mensaje-flotante');
-                if (mensaje) {
+    <script>
+        // Auto-cierre de mensajes después de 5 segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            const mensaje = document.querySelector('.mensaje-flotante');
+            if (mensaje) {
+                setTimeout(() => {
                     mensaje.style.animation = 'slideOut 0.3s forwards';
                     setTimeout(() => mensaje.remove(), 300);
-                }
-            }, 5000);
-        </script>
-        ";
-    }
-    ?>
+                }, 5000);
+            }
+        });
+
+        function cerrarMensaje(elemento) {
+            elemento.parentElement.style.animation = 'slideOut 0.3s forwards';
+            setTimeout(() => elemento.parentElement.remove(), 300);
+        }
+    </script>
 </body>
 </html>
